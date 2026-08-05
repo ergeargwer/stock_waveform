@@ -137,6 +137,12 @@ stock_waveform/
 - Codespaces 透過 `.devcontainer/devcontainer.json` 的 `postAttachCommand` 自動啟動 Streamlit，並轉發 8501。
 - `.env` 已列在 `.gitignore`，請勿把真實金鑰提交到版控。
 
+## 開發歷程
+
+完整里程碑、指標修正理由、3D 規格與 commit 對照見：
+
+**[DEVELOPMENT.md](./DEVELOPMENT.md)**
+
 ## License
 
 個人／學習用途。資料權利依 FinMind 服務條款。
