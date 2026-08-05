@@ -206,6 +206,8 @@ GitHub 倉庫頁無法內嵌長期跑 Python；實務路徑：
 | `003eb3c` | 2026-08-05 | 新增 Dev Container 資料夾 |
 | `99aa277` | 2026-08-05 | 3D 三視圖 + KD／相位欄位 + tabs |
 | `22febd7` | 2026-08-05 | Codespaces 一鍵執行與 README 雙入口說明 |
+| `d0fd7c9` | 2026-08-05 | 新增本文件 `DEVELOPMENT.md` 並於 README 連結 |
+| `13fee03` | 2026-08-05 | README 專案結構列出 `DEVELOPMENT.md` |
 
 （後續 commit 請以 `git log` 為準並同步更新本表。）
 
