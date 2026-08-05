@@ -4,6 +4,41 @@
 
 資料來源：[FinMind](https://finmindtrade.com/) `TaiwanStockPrice` API。
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=ergeargwer/stock_waveform&branch=main&mainModule=app.py)
+
+## 線上執行（Streamlit Community Cloud）
+
+免費託管，推送 `main` 後會自動重新部署。
+
+### 一鍵部署
+
+1. 用 **GitHub 帳號**登入 [Streamlit Community Cloud](https://share.streamlit.io)
+2. 點開下方連結（或點 README 上方徽章）：
+
+   **https://share.streamlit.io/deploy?repository=ergeargwer/stock_waveform&branch=main&mainModule=app.py**
+
+3. 確認：
+   - Repository：`ergeargwer/stock_waveform`
+   - Branch：`main`
+   - Main file path：`app.py`
+4. （建議）**Advanced settings → Secrets** 貼上：
+
+   ```toml
+   FINMIND_API_KEY = "你的_FinMind_金鑰"
+   ```
+
+5. 按 **Deploy**，約 1–3 分鐘後取得 `*.streamlit.app` 公開網址
+
+> 未設定金鑰時 FinMind 仍可能以限額模式運作；流量大時請填 Secrets。
+
+### 之後更新
+
+```bash
+git push origin main
+```
+
+Cloud 會自動偵測並重新部署。
+
 ## 功能
 
 - 輸入股票代碼與觀察交易日數（10–120）
@@ -29,22 +64,18 @@
 | 區間報酬 | 首日收盤 → 末日收盤的報酬率 |
 | 最大回撤 | 依時間順序，相對累積最高收盤價的最大跌幅（負值） |
 
-## 環境需求
-
-- Python 3.10+
-- FinMind API 金鑰（[註冊](https://finmindtrade.com/)）
-
-## 安裝與執行
+## 本機安裝與執行
 
 ```bash
+git clone https://github.com/ergeargwer/stock_waveform.git
 cd stock_waveform
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 設定金鑰
+# 選用：設定金鑰
 cp .env.example .env
-# 編輯 .env，將 FINMIND_API_KEY 改為你的金鑰
+# 編輯 .env，填入 FINMIND_API_KEY
 
 streamlit run app.py
 ```
@@ -55,20 +86,23 @@ streamlit run app.py
 
 ```
 stock_waveform/
-├── app.py              # Streamlit UI、快取、指標
-├── data_loader.py      # FinMind 拉取、日漲跌、區間報酬、最大回撤
-├── waveform.py         # Plotly 波形 + 成交量子圖
+├── app.py                 # Streamlit UI、快取、指標
+├── data_loader.py         # FinMind 拉取、日漲跌、區間報酬、最大回撤
+├── waveform.py            # Plotly 波形 + 成交量子圖
 ├── requirements.txt
-├── .env.example        # 金鑰範本（勿提交真實金鑰）
-├── .env                # 本機金鑰（已 gitignore）
+├── .streamlit/config.toml # 雲端／本機主題與 server 設定
+├── .env.example           # 金鑰範本（勿提交真實金鑰）
+├── .env                   # 本機金鑰（已 gitignore）
 └── README.md
 ```
 
 ## 設定
 
-| 變數 | 說明 |
-|------|------|
-| `FINMIND_API_KEY` | FinMind token；未設定時仍可能有限額存取，建議填入 |
+| 變數 / Secret | 說明 |
+|---------------|------|
+| `FINMIND_API_KEY` | FinMind token。本機：`.env`；線上：Streamlit **Secrets** |
+
+未設定時仍可能有限額存取；公開站建議在 Cloud Secrets 填入，訪客不需自備金鑰。
 
 ## 開發備註
 

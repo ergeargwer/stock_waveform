@@ -1,5 +1,6 @@
-import streamlit as st
 import os
+
+import streamlit as st
 from dotenv import load_dotenv
 
 from data_loader import (
@@ -12,7 +13,30 @@ from waveform import build_stock_figure
 
 load_dotenv()
 
-st.set_page_config(page_title="Stock Waveform", layout="wide")
+
+def _apply_secrets_to_env() -> str | None:
+    """本機用 .env；Streamlit Community Cloud 用 Secrets，同步到環境變數供 data_loader 使用。"""
+    key = os.getenv("FINMIND_API_KEY")
+    if key and key != "your_api_key_here":
+        return key
+    try:
+        secret = st.secrets.get("FINMIND_API_KEY", None)
+    except Exception:
+        secret = None
+    if secret and str(secret).strip() and str(secret) != "your_api_key_here":
+        os.environ["FINMIND_API_KEY"] = str(secret).strip()
+        return str(secret).strip()
+    return None
+
+
+st.set_page_config(
+    page_title="Stock Waveform",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+api_key = _apply_secrets_to_env()
 
 st.markdown(
     """
@@ -54,9 +78,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-api_key = os.getenv("FINMIND_API_KEY")
-if not api_key or api_key == "your_api_key_here":
-    st.error("⚠️ 尚未設定 FINMIND_API_KEY，請複製 `.env.example` 為 `.env` 並填入金鑰。")
+if not api_key:
+    st.sidebar.caption(
+        "未設定 FINMIND_API_KEY（可用限額模式）。"
+        "本機請設 `.env`；線上請在 Streamlit Secrets 填入。"
+    )
 
 st.sidebar.markdown(
     "<h2 style='text-align: center; color: #e0e6f0; margin-bottom: 0;'>Stock Waveform</h2>",
