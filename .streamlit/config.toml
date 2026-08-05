@@ -1,7 +1,11 @@
 [server]
 headless = true
+# Codespaces / 容器需綁定所有介面；本機亦相容
+address = "0.0.0.0"
+port = 8501
+# 經 GitHub Codespaces 轉發埠時需關閉，否則預覽頁會卡住
 enableCORS = false
-enableXsrfProtection = true
+enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false

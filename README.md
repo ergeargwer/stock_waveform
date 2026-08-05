@@ -4,40 +4,59 @@
 
 資料來源：[FinMind](https://finmindtrade.com/) `TaiwanStockPrice` API。
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ergeargwer/stock_waveform?quickstart=1)
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=ergeargwer/stock_waveform&branch=main&mainModule=app.py)
 
-## 線上執行（Streamlit Community Cloud）
+## 在 GitHub 上直接執行
 
-免費託管，推送 `main` 後會自動重新部署。
+有兩種方式，**不必在本機安裝 Python**。
 
-### 一鍵部署
+| 方式 | 適合 | 說明 |
+|------|------|------|
+| **GitHub Codespaces** | 開發、在 GitHub 網頁裡跑 | 開 Codespace 後會自動安裝依賴並啟動 Streamlit（埠 8501） |
+| **Streamlit Community Cloud** | 分享公開網址給別人 | 部署成 `*.streamlit.app`，訪客免登入 GitHub |
 
-1. 用 **GitHub 帳號**登入 [Streamlit Community Cloud](https://share.streamlit.io)
-2. 點開下方連結（或點 README 上方徽章）：
+---
 
-   **https://share.streamlit.io/deploy?repository=ergeargwer/stock_waveform&branch=main&mainModule=app.py**
+### 方式 A：GitHub Codespaces（推薦「在 GitHub 上執行」）
 
-3. 確認：
-   - Repository：`ergeargwer/stock_waveform`
-   - Branch：`main`
-   - Main file path：`app.py`
-4. （建議）**Advanced settings → Secrets** 貼上：
+1. 開啟倉庫：https://github.com/ergeargwer/stock_waveform  
+2. 點綠色 **Code** → **Codespaces** → **Create codespace on main**  
+   或直接點上方 **Open in GitHub Codespaces** 徽章：  
+   https://codespaces.new/ergeargwer/stock_waveform?quickstart=1  
+3. 首次建立約需 1–3 分鐘（安裝 `requirements.txt`）  
+4. 容器就緒後會**自動**執行 `streamlit run app.py`，並在預覽／轉發埠 **8501** 開啟介面  
+5. 若預覽未自動跳出：左側 **Ports** → 找到 `8501` → **Open in Browser**
+
+#### Codespaces 金鑰（選用）
+
+1. 倉庫 **Settings** → **Secrets and variables** → **Codespaces**  
+2. 新增 `FINMIND_API_KEY`（值為你的 FinMind token）  
+3. **重建** Codespace 後環境變數才會生效  
+
+未設定時仍可能以 FinMind 限額模式運作。
+
+> 免費額度依 GitHub 帳號方案而定；用完可改用下方 Streamlit Cloud。
+
+---
+
+### 方式 B：Streamlit Community Cloud（公開 Demo）
+
+1. 用 GitHub 登入 [share.streamlit.io](https://share.streamlit.io)  
+2. 一鍵部署：  
+   https://share.streamlit.io/deploy?repository=ergeargwer/stock_waveform&branch=main&mainModule=app.py  
+3. 確認 Main file 為 `app.py`  
+4. **Advanced settings → Secrets**（建議）：
 
    ```toml
    FINMIND_API_KEY = "你的_FinMind_金鑰"
    ```
 
-5. 按 **Deploy**，約 1–3 分鐘後取得 `*.streamlit.app` 公開網址
+5. 按 **Deploy**，取得 `https://xxxx.streamlit.app` 公開網址  
 
-> 未設定金鑰時 FinMind 仍可能以限額模式運作；流量大時請填 Secrets。
+之後 `git push origin main` 會自動重新部署。
 
-### 之後更新
-
-```bash
-git push origin main
-```
-
-Cloud 會自動偵測並重新部署。
+---
 
 ## 功能
 
@@ -84,35 +103,38 @@ cp .env.example .env
 streamlit run app.py
 ```
 
-瀏覽器開啟終端機顯示的本機網址（預設 `http://localhost:8501`）。
+瀏覽器開啟 `http://localhost:8501`。
 
 ## 專案結構
 
 ```
 stock_waveform/
-├── app.py                 # Streamlit UI、快取、指標、分頁
-├── data_loader.py         # FinMind、日漲跌、區間報酬、回撤、KD、相位欄位
-├── waveform.py            # Plotly 2D 波形 + 成交量子圖
-├── waveform_3d.py         # Plotly 3D：波形立體、KD 曲面、報酬相位
+├── app.py                      # Streamlit UI、快取、指標、分頁
+├── data_loader.py              # FinMind、日漲跌、區間報酬、回撤、KD、相位欄位
+├── waveform.py                 # Plotly 2D 波形 + 成交量子圖
+├── waveform_3d.py              # Plotly 3D：波形立體、KD 曲面、報酬相位
 ├── requirements.txt
-├── .streamlit/config.toml # 雲端／本機主題與 server 設定
-├── .env.example           # 金鑰範本（勿提交真實金鑰）
-├── .env                   # 本機金鑰（已 gitignore）
+├── .devcontainer/
+│   └── devcontainer.json       # GitHub Codespaces：自動安裝並啟動 Streamlit
+├── .streamlit/config.toml      # 伺服器與深色主題（相容 Codespaces 轉發）
+├── .env.example                # 金鑰範本（勿提交真實金鑰）
+├── .env                        # 本機金鑰（已 gitignore）
 └── README.md
 ```
 
 ## 設定
 
-| 變數 / Secret | 說明 |
-|---------------|------|
-| `FINMIND_API_KEY` | FinMind token。本機：`.env`；線上：Streamlit **Secrets** |
+| 變數 / Secret | 本機 | Codespaces | Streamlit Cloud |
+|---------------|------|------------|-----------------|
+| `FINMIND_API_KEY` | `.env` | 倉庫 Codespaces Secrets | App Secrets（TOML） |
 
-未設定時仍可能有限額存取；公開站建議在 Cloud Secrets 填入，訪客不需自備金鑰。
+未設定時仍可能有限額存取；公開站建議填入金鑰，訪客不需自備 API key。
 
 ## 開發備註
 
 - `load_stock_data` 使用 `@st.cache_data(ttl=3600)`，同一標的／天數一小時內不重複打 API。
 - 波形 stem 依「方向 × 線寬分箱」合併 trace，避免每個交易日各建 2 條 trace。
+- Codespaces 透過 `.devcontainer/devcontainer.json` 的 `postAttachCommand` 自動啟動 Streamlit，並轉發 8501。
 - `.env` 已列在 `.gitignore`，請勿把真實金鑰提交到版控。
 
 ## License
