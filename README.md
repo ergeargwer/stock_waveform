@@ -119,6 +119,7 @@ stock_waveform/
 ├── .streamlit/config.toml      # 伺服器與深色主題（相容 Codespaces 轉發）
 ├── .env.example                # 金鑰範本（勿提交真實金鑰）
 ├── .env                        # 本機金鑰（已 gitignore）
+├── DEVELOPMENT.md              # 開發歷程與里程碑
 └── README.md
 ```
 
