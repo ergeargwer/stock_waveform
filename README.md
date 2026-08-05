@@ -43,7 +43,11 @@ Cloud 會自動偵測並重新部署。
 
 - 輸入股票代碼與觀察交易日數（10–120）
 - **最新收盤價**、**最新日漲跌**、**區間報酬**、**最大回撤**（peak-to-trough）
-- 波形圖 + 成交量（同一張圖、共用 X 軸）
+- 四個分頁視圖：
+  - **2D 波形圖**：Z-Score 波形 + 成交量（共用 X 軸）
+  - **3D 波形立體圖**：交易日 × 收盤 Z-Score × 成交量 Z-Score
+  - **3D 價量指標曲面**：交易日 × 收盤 Z-Score × KD(9,3,3) 的 K 值（需至少 14 個交易日）
+  - **3D 報酬相位軌跡**：今日報酬 × 昨日報酬 × 成交量變化率（時間漸層）
 - API 結果快取 1 小時；首次開啟自動載入預設標的（2330）
 
 ### 視覺編碼
@@ -86,9 +90,10 @@ streamlit run app.py
 
 ```
 stock_waveform/
-├── app.py                 # Streamlit UI、快取、指標
-├── data_loader.py         # FinMind 拉取、日漲跌、區間報酬、最大回撤
-├── waveform.py            # Plotly 波形 + 成交量子圖
+├── app.py                 # Streamlit UI、快取、指標、分頁
+├── data_loader.py         # FinMind、日漲跌、區間報酬、回撤、KD、相位欄位
+├── waveform.py            # Plotly 2D 波形 + 成交量子圖
+├── waveform_3d.py         # Plotly 3D：波形立體、KD 曲面、報酬相位
 ├── requirements.txt
 ├── .streamlit/config.toml # 雲端／本機主題與 server 設定
 ├── .env.example           # 金鑰範本（勿提交真實金鑰）

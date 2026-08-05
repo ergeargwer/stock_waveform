@@ -8,8 +8,15 @@ from data_loader import (
     compute_daily_change,
     period_return_pct,
     max_drawdown_pct,
+    calculate_kd,
+    compute_return_phase_fields,
 )
 from waveform import build_stock_figure
+from waveform_3d import (
+    plot_waveform_3d,
+    plot_kd_surface_3d,
+    plot_return_phase_3d,
+)
 
 load_dotenv()
 
@@ -29,9 +36,18 @@ def _apply_secrets_to_env() -> str | None:
     return None
 
 
+def _caption_box(text: str) -> None:
+    st.markdown(
+        "<div style='background-color: #1e2433; padding: 15px; border-radius: 8px; "
+        "border: 1px solid #2d3548; color: #e0e6f0; text-align: center;'>"
+        f"{text}"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
 st.set_page_config(
     page_title="Stock Waveform",
-    page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -162,14 +178,81 @@ if should_load:
 
     st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
-    fig = build_stock_figure(df, ticker)
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    st.markdown(
-        "<div style='background-color: #1e2433; padding: 15px; border-radius: 8px; "
-        "border: 1px solid #2d3548; color: #e0e6f0; text-align: center;'>"
-        "線段向上為上漲（綠），向下為下跌（紅），線段粗細代表當日成交量大小；"
-        "Y 軸為收盤價 Z-Score；下方為成交量"
-        "</div>",
-        unsafe_allow_html=True,
+    tab_2d, tab_3d_wave, tab_3d_kd, tab_3d_phase = st.tabs(
+        ["2D 波形圖", "3D 波形立體圖", "3D 價量指標曲面", "3D 報酬相位軌跡"]
     )
+
+    # ----- Tab 1: 既有 2D（邏輯不變）-----
+    with tab_2d:
+        fig_2d = build_stock_figure(df, ticker)
+        st.plotly_chart(fig_2d, use_container_width=True, config={"displayModeBar": False})
+        _caption_box(
+            "線段向上為上漲（綠），向下為下跌（紅），線段粗細代表當日成交量大小；"
+            "Y 軸為收盤價 Z-Score；下方為成交量"
+        )
+
+    # ----- Tab 2: 3D 波形立體圖 -----
+    with tab_3d_wave:
+        fig_w3d, err_w3d = plot_waveform_3d(df, ticker)
+        if err_w3d and fig_w3d is None:
+            st.warning(err_w3d)
+        elif fig_w3d is not None:
+            st.plotly_chart(
+                fig_w3d,
+                use_container_width=True,
+                config={"displayModeBar": True},
+            )
+            _caption_box(
+                "X 軸為交易日序，Y 軸為收盤價 Z-Score，Z 軸為成交量 Z-Score；"
+                "端點顏色：上漲（綠）、下跌（紅）、平盤（灰）。可拖曳旋轉、滾輪縮放。"
+            )
+
+    # ----- Tab 3: 3D 價量指標曲面（KD）-----
+    with tab_3d_kd:
+        try:
+            df_kd = calculate_kd(df)
+        except ValueError as e:
+            st.warning(str(e))
+            df_kd = None
+
+        if df_kd is not None:
+            fig_kd, err_kd = plot_kd_surface_3d(df_kd, ticker)
+            if err_kd and fig_kd is None:
+                st.warning(err_kd)
+            elif fig_kd is not None:
+                st.plotly_chart(
+                    fig_kd,
+                    use_container_width=True,
+                    config={"displayModeBar": True},
+                )
+                _caption_box(
+                    "X 軸為交易日序，Y 軸為收盤價 Z-Score，Z 軸為 KD(9,3,3) 的 K 值；"
+                    "顏色：K 低於 20 偏綠（超賣區）、20–80 中性、高於 80 偏紅（超買區）。"
+                    "可拖曳旋轉、滾輪縮放；hover 顯示日期與 K、D。"
+                )
+
+    # ----- Tab 4: 3D 報酬相位軌跡 -----
+    with tab_3d_phase:
+        try:
+            df_phase = compute_return_phase_fields(df)
+        except ValueError as e:
+            st.warning(str(e))
+            df_phase = None
+
+        if df_phase is not None:
+            fig_ph, msg_ph = plot_return_phase_3d(df_phase, ticker)
+            if fig_ph is None:
+                st.warning(msg_ph or "無法繪製 3D 報酬相位軌跡。")
+            else:
+                if msg_ph:
+                    st.info(msg_ph)
+                st.plotly_chart(
+                    fig_ph,
+                    use_container_width=True,
+                    config={"displayModeBar": True},
+                )
+                _caption_box(
+                    "X 軸為今日報酬率（%），Y 軸為昨日報酬率（%），Z 軸為成交量變化率（%）；"
+                    "依時間序連線，marker 由淺至深表示時間先後，便於觀察軌跡方向。"
+                    "可拖曳旋轉、滾輪縮放。"
+                )

@@ -118,3 +118,100 @@ def max_drawdown_pct(close: pd.Series) -> float:
     if pd.isna(val):
         return 0.0
     return float(val)
+
+
+def calculate_kd(
+    df: pd.DataFrame,
+    n: int = 9,
+    k_period: int = 3,
+    d_period: int = 3,
+) -> pd.DataFrame:
+    """
+    計算標準 KD(n, k_period, d_period)，預設 KD(9,3,3)。
+
+    - RSV = (收盤 - n 日最低) / (n 日最高 - n 日最低) * 100
+    - K = (1 - 1/k_period) * 前K + (1/k_period) * RSV
+    - D = (1 - 1/d_period) * 前D + (1/d_period) * K
+    初始 K、D 以 50 起算（台股常見看盤軟體慣例）。
+
+    回傳含欄位 K、D 的新 DataFrame；前 n-1 筆 RSV 無效時 K、D 為 NaN。
+    不在此處以預設值填補缺資料；呼叫端應檢查筆數是否足夠（建議 >= 14）。
+    """
+    if df is None or df.empty:
+        raise ValueError("無法計算 KD：資料為空")
+
+    required = {"close", "max", "min"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"無法計算 KD：缺少欄位 {sorted(missing)}")
+
+    out = df.copy()
+    low_n = out["min"].rolling(window=n, min_periods=n).min()
+    high_n = out["max"].rolling(window=n, min_periods=n).max()
+    denom = high_n - low_n
+
+    rsv = pd.Series(np.nan, index=out.index, dtype=float)
+    valid_range = denom > 0
+    rsv.loc[valid_range] = (
+        (out.loc[valid_range, "close"] - low_n.loc[valid_range])
+        / denom.loc[valid_range]
+        * 100.0
+    )
+    # 區間高低相等時 RSV 無定義方向；採看盤軟體常見作法設為 50（非缺值填補）
+    zero_range = denom.eq(0) & high_n.notna()
+    rsv.loc[zero_range] = 50.0
+
+    k_alpha = 1.0 / k_period
+    d_alpha = 1.0 / d_period
+    k_list: list[float] = []
+    d_list: list[float] = []
+    k_prev = 50.0
+    d_prev = 50.0
+    started = False
+
+    for val in rsv.to_numpy(dtype=float):
+        if np.isnan(val):
+            k_list.append(np.nan)
+            d_list.append(np.nan)
+            continue
+        if not started:
+            # 第一個有效 RSV：仍用遞迴平滑，自 50 起算
+            started = True
+        k = (1.0 - k_alpha) * k_prev + k_alpha * float(val)
+        d = (1.0 - d_alpha) * d_prev + d_alpha * k
+        k_list.append(k)
+        d_list.append(d)
+        k_prev = k
+        d_prev = d
+
+    out["K"] = k_list
+    out["D"] = d_list
+    out["RSV"] = rsv.to_numpy(dtype=float)
+    return out
+
+
+def compute_return_phase_fields(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    計算報酬相位軌跡所需欄位（不丟棄列，由繪圖端處理缺值）：
+
+    - return_today：今日報酬率 (close_t / close_{t-1} - 1)
+    - return_yesterday：昨日報酬率（return_today 位移一天）
+    - volume_change_rate：成交量變化率 (vol_t / vol_{t-1} - 1)
+    """
+    if df is None or df.empty:
+        raise ValueError("無法計算報酬相位欄位：資料為空")
+
+    out = df.copy()
+    close = out["close"].astype(float)
+    vol = out["Trading_Volume"].astype(float)
+
+    out["return_today"] = close / close.shift(1) - 1.0
+    out["return_yesterday"] = out["return_today"].shift(1)
+    # 成交量為 0 時變化率無意義，維持 NaN，不填 0
+    prev_vol = vol.shift(1)
+    out["volume_change_rate"] = np.where(
+        prev_vol.to_numpy(dtype=float) > 0,
+        vol.to_numpy(dtype=float) / prev_vol.to_numpy(dtype=float) - 1.0,
+        np.nan,
+    )
+    return out
